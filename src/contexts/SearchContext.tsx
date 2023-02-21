@@ -6,7 +6,7 @@ import {
 	useContext,
 	useState,
 } from "react";
-import Media from "../spriggan-shared/types/Media";
+import { Media } from "../spriggan-shared/types/Media";
 import { SearchParams } from "../spriggan-shared/types/SearchTypes";
 
 /**

@@ -3,20 +3,19 @@ import {
 	CardActionArea, Typography,
 	CardMedia, CardContent, Card
 } from '@mui/material';
-import { Dispatch, SetStateAction } from 'react';
 
-import type Media from '../spriggan-shared/types/Media';
-import StorePage, { StorePageProps } from './StorePage';
+import type { Media } from '../spriggan-shared/types/Media';
+import GamePage, { GamePageProps } from './GamePage';
 
-export type GameCardProps = {
-	game: Media;
-	setActiveOffer: Dispatch<SetStateAction<string>>;
-	onBuy: () => void;
+export type MediaCardProps = {
+	media: Media;
 };
 
-export default function GameCard( props: GameCardProps ) {
+export default function MediaCard( props: MediaCardProps ) {
 
 	const [open, setOpen] = React.useState(false);
+
+	console.log("props: ", props);
 
 	const handleClickOpen = () => {
 		setOpen(true);
@@ -28,20 +27,20 @@ export default function GameCard( props: GameCardProps ) {
 				<CardMedia
 					component="img"
 					height="140"
-					image={props.game.capsuleimage}
-					alt={props.game.title}
+					image={props.media.capsuleimage}
+					alt={props.media.title}
 				/>
 				<CardContent>
 				<Typography gutterBottom variant="h5">
-					{props.game.title}
+					{props.media.title}
 				</Typography>
 				<Typography variant="body2" color="text.secondary">
-					{props.game.shortdescription}
+					{props.media.shortdescription}
 				</Typography>
 				</CardContent>
 			</CardActionArea>
 		</Card>
-		{StorePage({open, setOpen, ...props} as StorePageProps)}
+		{GamePage({open, setOpen, ...props} as GamePageProps)}
 		</div>
 	);
 };
