@@ -1,9 +1,9 @@
 import { Grid, Typography } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import { Media } from "../spriggan-shared/types/Media";
-import MediaCard from "./MediaCard";
+import { MediaCard } from "./MediaCard";
 
-const MediaGrid = (
+export const MediaGrid = (
 		title: string,
 		searchResults: Media[],
 	) => {
@@ -23,5 +23,3 @@ const MediaGrid = (
 		</Paper>
 	);
 }
-
-export default MediaGrid;

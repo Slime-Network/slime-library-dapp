@@ -6,7 +6,7 @@ import {
 	CardMedia, AppBar, Toolbar, Card, Slide, IconButton, Box,
 	Stack, Divider, SlideProps
 } from '@mui/material';
-import { Dispatch, SetStateAction, useEffect } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 
 import { Media } from '../spriggan-shared/types/Media';
 
@@ -20,7 +20,7 @@ export type TabPanelProps = {
 	value: number,
 };
 
-function TabPanel(props: TabPanelProps) {
+const TabPanel = (props: TabPanelProps) => {
 	const { children, value, index, ...other } = props;
 
 	return (
@@ -40,21 +40,21 @@ function TabPanel(props: TabPanelProps) {
 	);
 }
 
-function TabProps(index: number) {
+const TabProps = (index: number) => {
 	return {
 		id: `full-width-tab-${index}`,
 		'aria-controls': `full-width-tabpanel-${index}`,
 	};
 }
 
-export type GamePageProps = {
+export type MediaPageProps = {
 	media: Media;
 	launch: () => void;
 	open: boolean,
 	setOpen: Dispatch<SetStateAction<boolean>>
 };
 
-export default function GamePage( props: GamePageProps ) {
+export const MediaPage = ( props: MediaPageProps ) => {
 
 	const [tab, setTab] = React.useState(0);
 
@@ -107,7 +107,7 @@ export default function GamePage( props: GamePageProps ) {
 							<Card sx={{ m: 0, p: 2, height: '100%' }} >
 								<CardMedia
 									component="iframe"
-									src={(props.media.trailersource === 'youtube') ?"https://www.youtube.com/embed/" + props.media.trailer + "?autoplay=1&origin=http://.com": ""}
+									src={(props.media.trailerSource === 'youtube') ?"https://www.youtube.com/embed/" + props.media.trailer + "?autoplay=1&origin=http://.com": ""}
 									height={'360'}
 								/>
 							</Card>
@@ -128,7 +128,7 @@ export default function GamePage( props: GamePageProps ) {
 						</Stack>
 					</Grid>
 					<Card sx={{ m: 1, p: 4, width: '100%' }}>
-						<ReactMarkdown children={props.media.longdescription}/>
+						<ReactMarkdown children={props.media.longDescription}/>
 					</Card>
 				</Grid>
 			</Container>

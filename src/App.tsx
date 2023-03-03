@@ -2,18 +2,20 @@ import { useEffect, useState } from "react";
 import './App.css';
 
 import { Box, Button } from "@mui/material";
-import MainTopBar from "./components/MainTopBar";
-import MediaGrid from "./components/MediaGrid";
+import { MainTopBar } from "./components/MainTopBar";
+import { MediaGrid } from "./components/MediaGrid";
 
 import { useWalletConnectClient } from "./chia-walletconnect/WalletConnectClientContext";
 import { useWalletConnectRpc, WalletConnectRpcParams } from "./chia-walletconnect/WalletConnectRpcContext";
-import { useSprigganRpc, SprigganRPCParams } from "./spriggan-shared/rpc/SprigganRpcContext";
+import { useSprigganRpc, SprigganRPCParams } from "./spriggan-shared/contexts/SprigganRpcContext";
 import { GetNftsResult, GetWalletsResult, Nft, WalletType } from "./chia-walletconnect/types";
-import { loadNftData } from "./util";
-import { Media } from "./spriggan-shared/types/Media";
+import { Media, parseNftMetadata } from "./spriggan-shared/types/Media";
+import { useSearch } from "./spriggan-shared/contexts/SearchContext";
+import axios from "axios";
 
-function App() {
-
+export const App = () => {
+	
+	const { search } = useSearch()
 	const [searchTerm, setSearchTerm] = useState<string>("");
 
 	useEffect(() => {
@@ -38,7 +40,7 @@ function App() {
 	} = useWalletConnectRpc();
 
 	useEffect(() => {
-		async function testConnection() {
+		const testConnection = async () => {
 			console.log("Testing Connection")
 			try {
 				const connected = await ping();
@@ -84,7 +86,7 @@ function App() {
 	} = useSprigganRpc();
 
 	useEffect(() => {
-		async function ping() {
+		const ping = async () => {
 			try {
 				await sprigganRpc.ping({} as SprigganRPCParams);
 				console.log("connected!");
@@ -123,11 +125,51 @@ function App() {
 		return nfts
 	}
 
+	const loadMediaData = async (nfts: Nft[]) => {
+		console.log("loadNftData")
+		const media:Media[] = []
+		for (const nft of nfts) {
+			const resp = await axios({
+				method: 'get',
+				url: nft.metadataUris[0],
+			});
+			const meta = parseNftMetadata(resp.data);
+			var local = null
+			try {
+				await sprigganRpc.getLocalData({} as SprigganRPCParams);
+				local = sprigganRpcResult?.result;
+				console.log("Local Data", local);
+				local = JSON.parse(local as string) as Media;
+				console.log("Local Data", local);
+			}
+			catch (except) {
+				console.log("Local Data not found.");
+			}
+			try {
+				const marketplaceData = await search.installData(meta.productId);
+				console.log("xxcvzvzvv", marketplaceData);
+				media.push(marketplaceData);
+
+				if (marketplaceData !== local) {
+
+				}
+			}
+			catch (except) {
+				
+				console.log("Marketplace Data not found.");
+			}
+			
+
+			// media.push(marketplaceData);
+		}
+		return media
+	}
+
 	const [searchResults, setSearchResults] = useState<Media[]>([]);
 	
 	useEffect(() => {
-		async function fetch() {
-			const nfts = await loadNftData(await loadNfts());
+		const fetch = async() => {
+			const nfts = await loadMediaData(await loadNfts());
 			setSearchResults(nfts);
 			console.log("setResults", searchResults);
 		}
@@ -150,13 +192,11 @@ function App() {
 			{MainTopBar(session, onConnect, disconnect, (event) => {setSearchTerm(event.target.value)})}
 			{MediaGrid("Games", searchResults)}
 			<Button onClick={async () => {
-				if (session) {
+					await sprigganRpc.getLocalData({productId: "asdf"} as SprigganRPCParams)
+					console.log("fasdfasdf", sprigganRpcResult)
 					
-					// console.log("NFT RESULT", result);
-				}
 			}}>Execute test</Button>
 		</Box>
 	);
 }
 
-export default App;

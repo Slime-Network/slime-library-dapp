@@ -5,13 +5,13 @@ import {
 } from '@mui/material';
 
 import type { Media } from '../spriggan-shared/types/Media';
-import GamePage, { GamePageProps } from './GamePage';
+import { MediaPage, MediaPageProps } from './MediaPage';
 
 export type MediaCardProps = {
 	media: Media;
 };
 
-export default function MediaCard( props: MediaCardProps ) {
+export const MediaCard = ( props: MediaCardProps ) => {
 
 	const [open, setOpen] = React.useState(false);
 
@@ -27,7 +27,7 @@ export default function MediaCard( props: MediaCardProps ) {
 				<CardMedia
 					component="img"
 					height="140"
-					image={props.media.capsuleimage}
+					image={props.media.capsuleImage}
 					alt={props.media.title}
 				/>
 				<CardContent>
@@ -35,12 +35,12 @@ export default function MediaCard( props: MediaCardProps ) {
 					{props.media.title}
 				</Typography>
 				<Typography variant="body2" color="text.secondary">
-					{props.media.shortdescription}
+					{props.media.shortDescription}
 				</Typography>
 				</CardContent>
 			</CardActionArea>
 		</Card>
-		{GamePage({open, setOpen, ...props} as GamePageProps)}
+		{MediaPage({open, setOpen, ...props} as MediaPageProps)}
 		</div>
 	);
 };

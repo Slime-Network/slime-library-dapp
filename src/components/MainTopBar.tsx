@@ -58,12 +58,12 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 	},
 }));
 
-export default function PrimarySearchAppBar(
+export const MainTopBar = (
 			session: SessionTypes.Struct | undefined,
 			connectToWallet: () => void,
 			disconnectFromWallet: () => void,
 			setSearchTerm: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void,
-		) {
+		) => {
 
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const [anchor2El, setAnchor2El] = useState<null | HTMLElement>(null);
