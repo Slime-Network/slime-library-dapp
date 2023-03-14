@@ -5,7 +5,7 @@ const ThemeSwitcher = () => {
 	const { mode, setMode } = useColorScheme();
 	const [mounted, setMounted] = useState(false);
 
-	setMode('dark')
+	setMode('dark');
 
 	useEffect(() => {
 		setMounted(true);
@@ -16,16 +16,16 @@ const ThemeSwitcher = () => {
 		// learn more at https://github.com/pacocoursey/next-themes#avoid-hydration-mismatch
 		return null;
 	}
-	
+
 	return (
 		<Button
 			variant="outlined"
 			onClick={() => {
-			if (mode === 'light') {
-				setMode('dark');
-			} else {
-				setMode('light');
-			}
+				if (mode === 'light') {
+					setMode('dark');
+				} else {
+					setMode('light');
+				}
 			}}
 		>
 			{mode === 'light' ? 'Light Mode' : 'Dark Mode'}
