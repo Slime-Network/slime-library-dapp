@@ -83,23 +83,28 @@ export const App = () => {
 	} = useSprigganRpc();
 
 	useEffect(() => {
-		const pingRpc = async () => {
-			try {
-				await sprigganRpc.ping({} as SprigganRPCParams);
-				console.log("connected!");
-				return sprigganRpcResult?.valid;
-			} catch (e) {
-				console.log("ping fail", e);
-				return false;
-			}
-		};
+		if (sprigganRpcResult?.method === "ping") {
+			const pingRpc = async () => {
+				try {
+					await sprigganRpc.ping({} as SprigganRPCParams);
+					console.log("connected!");
+					return sprigganRpcResult?.valid;
+				} catch (e) {
+					console.log("ping fail", e);
+					return false;
+				}
+			};
 
-		const interval = setInterval(() => {
-			// This will run every 10 mins
-			console.log("Ping: ", pingRpc());
-		}, 1000 * 60 * 1);
+			const interval = setInterval(() => {
+				// This will run every 10 mins
+				console.log("Ping: ", pingRpc());
+			}, 1000 * 60 * 1);
 
-		return () => clearInterval(interval);
+			return () => clearInterval(interval);
+		}
+
+		return () => true;
+
 	}, [sprigganRpc, sprigganRpcResult]);
 
 	const loadNfts = useCallback(
@@ -143,28 +148,26 @@ export const App = () => {
 				try {
 					await sprigganRpc.getLocalData({} as SprigganRPCParams);
 					localData = sprigganRpcResult?.result;
-					console.log("Local Data", localData);
 					localData = JSON.parse(localData as string) as Media;
-					console.log("Local Data", localData);
 				}
 				catch (except) {
 					console.log("Local Data not found.");
 				}
 				try {
 					marketplaceData = await search.installData(meta.productId);
-					console.log("xxcvzvzvv", marketplaceData);
 					media.push(marketplaceData);
+					console.log("marketplace data", marketplaceData);
 
-					// if (marketplaceData !== localData) {
-
-					// }
+					if (marketplaceData !== localData) {
+						await sprigganRpc.saveLocalData({ media: marketplaceData } as SprigganRPCParams);
+					}
 				}
 				catch (except) {
 					console.log("Marketplace Data not found.");
 				}
 			});
 			return media;
-		}, [search, sprigganRpc, sprigganRpcResult]
+		}, [search, sprigganRpc, sprigganRpcResult?.result]
 	);
 
 	const [searchResults, setSearchResults] = useState<Media[]>([]);
@@ -172,7 +175,6 @@ export const App = () => {
 	useEffect(() => {
 		const fetch = async () => {
 			const results = await loadMediaData(await loadNfts());
-			console.log("setResults", results);
 			setSearchResults(results);
 		};
 		if (session?.acknowledged) {
@@ -186,7 +188,8 @@ export const App = () => {
 		}, 1000 * 60 * 10);
 
 		return () => clearInterval(interval);
-	}, [session, loadMediaData, loadNfts]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- dd
+	}, [session]);
 
 
 	return (

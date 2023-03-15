@@ -10,14 +10,24 @@ export const MediaGrid = (
 ) => (
 	<Paper elevation={1} sx={{ m: 2 }}>
 		<Typography sx={{ p: 2 }} variant="h4">{title}</Typography>
-		<Grid container p={4} spacing={4} id="medialist">
-			{searchResults && searchResults.map((result: Media) => (
-				<Grid key={result.title} item xs={6} sm={4} md={3} lg={2}>
-					<MediaCard
-						media={result}
-					/>
-				</Grid>
-			))}
-		</Grid>
+		{searchResults && searchResults.length > 0 ? (
+			<Grid container p={4} spacing={4} id="medialist">
+				{searchResults.map((result: Media) => {
+					if (result) {
+						return <Grid item xs={6} sm={4} md={3} lg={2}>
+							<MediaCard
+								media={result}
+							/>
+						</Grid>;
+					}
+					return <Grid item xs={6} sm={4} md={3} lg={2}>
+						<Typography sx={{ p: 2 }}>{title} Data Not Found</Typography>
+					</Grid>;
+
+				})}
+			</Grid>
+		) : (
+			<Typography sx={{ p: 2 }}>No {title} Found</Typography>
+		)}
 	</Paper>
 );
