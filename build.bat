@@ -1,1 +1,1 @@
-yarn build & robocopy /E "./build" "../spriggan-client/spriggan-client-gui/public/dapps/spriggan-library-dapp/"
+yarn build & robocopy /NDL /NFL /NP /NJS /NJH /E "./build" "../spriggan-client/spriggan-client-gui/public/dapps/spriggan-library-dapp/"
