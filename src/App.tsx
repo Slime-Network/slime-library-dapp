@@ -2,77 +2,44 @@ import { Box } from "@mui/material";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 
-import { useWalletConnectClient } from "./chia-walletconnect/contexts/WalletConnectClientContext";
-import { useWalletConnectRpc, WalletConnectRpcParams } from "./chia-walletconnect/contexts/WalletConnectRpcContext";
-import { GetNftsResult, GetWalletsResult, Nft, WalletType } from "./chia-walletconnect/types";
 import { MainTopBar } from "./components/MainTopBar";
 import { MediaGrid } from "./components/MediaGrid";
-import { useSearch } from "./spriggan-shared/contexts/SearchContext";
+import { useJsonRpc } from "./spriggan-shared/contexts/JsonRpcContext";
+import { useMarketplaceApi } from "./spriggan-shared/contexts/MarketplaceApiContext";
 import { useSprigganRpc, SprigganRPCParams } from "./spriggan-shared/contexts/SprigganRpcContext";
+import { useWalletConnect } from "./spriggan-shared/contexts/WalletConnectContext";
 import { Media, parseNftMetadata } from "./spriggan-shared/types/Media";
+import { NftInfo } from "./spriggan-shared/types/NftInfo";
+import { InstallDataParams } from "./spriggan-shared/types/SearchTypes";
+import { WalletType } from "./spriggan-shared/types/WalletType";
+import { GetNftsRequest, GetNftsResponse } from "./spriggan-shared/types/rpc/GetNfts";
+import { GetWalletsRequest } from "./spriggan-shared/types/rpc/GetWallets";
 
 export const App = () => {
 
-	const { search } = useSearch();
+	const { search } = useMarketplaceApi();
 	const [, setSearchTerm] = useState<string>("");
 
 	useEffect(() => {
 		document.title = `Spriggan Library`;
 	}, []);
 
-	// Initialize the WalletConnect client.
+	const { client, session, pairings, connect, disconnect } =
+		useWalletConnect();
+
 	const {
-		client,
-		pairings,
-		session,
-		connect,
-		disconnect,
-		isInitializing,
-	} = useWalletConnectClient();
-
-	// Use `JsonRpcContext` to provide us with relevant RPC methods and states.
-	const {
-		ping,
-		walletconnectRpc,
-	} = useWalletConnectRpc();
-
-	useEffect(() => {
-		const testConnection = async () => {
-			console.log("Testing Connection");
-			try {
-				const connected = await ping();
-				if (!connected) {
-					disconnect();
-				}
-				return connected;
-			} catch (e) {
-				console.log("ping fail", e);
-				disconnect();
-				return false;
-			}
-		};
-
-		if (!isInitializing) {
-			testConnection();
-		}
-
-		const interval = setInterval(async () => {
-			console.log("Ping: ", await testConnection());
-		}, 1000 * 60 * 1);
-
-		return () => clearInterval(interval);
-	}, [disconnect, isInitializing, ping, session]);
+		getWallets,
+		getNfts,
+	} = useJsonRpc();
 
 	const onConnect = () => {
-		if (typeof client === "undefined") {
-			throw new Error("WalletConnect is not initialized");
-		}
-		// Suggest existing pairings (if any).
-		if (pairings.length) {
-			console.log("connecting to existing pairing");
-			connect(pairings[pairings.length - 1]);
+		if (!client) throw new Error('WalletConnect is not initialized.');
+
+		if (pairings.length === 1) {
+			connect({ topic: pairings[0].topic });
+		} else if (pairings.length) {
+			console.log('The pairing modal is not implemented.', pairings);
 		} else {
-			// If no existing pairings are available, trigger `WalletConnectClient.connect`.
 			connect();
 		}
 	};
@@ -109,35 +76,33 @@ export const App = () => {
 
 	const loadNfts = useCallback(
 		async () => {
-			const nfts: Nft[] = [];
-			const fingerprint = session?.namespaces.chia.accounts[0].split(":")[2];
-			let result = await walletconnectRpc.getWallets({ fingerprint } as WalletConnectRpcParams);
+			const nfts: NftInfo[] = [];
+			const getWalletsResult = await getWallets({ includeData: true } as GetWalletsRequest);
 			const walletIds: number[] = [];
-			console.log("WC result", result);
 
-			(result.result.data as GetWalletsResult[]).forEach((wallet) => {
-				if (wallet.type === WalletType.NFT) {
+			getWalletsResult.forEach((wallet) => {
+				if (wallet.type === WalletType.Nft) {
 					walletIds.push(wallet.id);
 				}
 			});
 
-			result = await walletconnectRpc.getNFTs({ fingerprint, walletIds } as WalletConnectRpcParams);
+			const getNftsResponse = await getNfts({ walletIds } as GetNftsRequest);
 
-			Object.entries(result.result.data as GetNftsResult).forEach((nftList: [string, Nft[]]) => {
-				nftList[1].forEach((nft: Nft) => {
+			Object.entries(getNftsResponse as GetNftsResponse).forEach((nftList: [string, NftInfo[]]) => {
+				nftList[1].forEach((nft: NftInfo) => {
 					nfts.push(nft);
 				});
 			});
 
 			return nfts;
-		}, [session, walletconnectRpc]
+		}, [getWallets, getNfts]
 	);
 
 	const loadMediaData = useCallback(
-		async (nfts: Nft[]) => {
+		async (nfts: NftInfo[]) => {
 			console.log("loadNftData");
 			const media: Media[] = [];
-			nfts.forEach(async (nft: Nft) => {
+			nfts.forEach(async (nft: NftInfo) => {
 				const resp = await axios({
 					method: 'get',
 					url: nft.metadataUris[0],
@@ -154,7 +119,7 @@ export const App = () => {
 					console.log("Local Data not found.");
 				}
 				try {
-					marketplaceData = await search.installData(meta.productId);
+					marketplaceData = await search.getInstallData({ productId: meta.productId } as InstallDataParams);
 					media.push(marketplaceData);
 					console.log("marketplace data", marketplaceData);
 
@@ -173,6 +138,7 @@ export const App = () => {
 	const [searchResults, setSearchResults] = useState<Media[]>([]);
 
 	useEffect(() => {
+		console.log("session", session);
 		const fetch = async () => {
 			const results = await loadMediaData(await loadNfts());
 			setSearchResults(results);
@@ -190,7 +156,6 @@ export const App = () => {
 		return () => clearInterval(interval);
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- dd
 	}, [session]);
-
 
 	return (
 		<Box>
