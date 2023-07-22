@@ -1,8 +1,8 @@
 import { Grid, Typography } from "@mui/material";
 import Paper from "@mui/material/Paper";
 
+import { Media } from "../spriggan-shared/types/spriggan/Media";
 import { MediaCard } from "./MediaCard";
-import { Media } from "../spriggan-shared/types/Media";
 
 export const MediaGrid = (
 	title: string,

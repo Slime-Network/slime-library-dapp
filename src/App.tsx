@@ -6,18 +6,18 @@ import { MainTopBar } from "./components/MainTopBar";
 import { MediaGrid } from "./components/MediaGrid";
 import { useJsonRpc } from "./spriggan-shared/contexts/JsonRpcContext";
 import { useMarketplaceApi } from "./spriggan-shared/contexts/MarketplaceApiContext";
-import { useSprigganRpc, SprigganRPCParams } from "./spriggan-shared/contexts/SprigganRpcContext";
+import { GetLocalDataRequest, PingRequest, SaveLocalDataRequest, useSprigganRpc } from "./spriggan-shared/contexts/SprigganRpcContext";
 import { useWalletConnect } from "./spriggan-shared/contexts/WalletConnectContext";
-import { Media, parseNftMetadata } from "./spriggan-shared/types/Media";
-import { NftInfo } from "./spriggan-shared/types/NftInfo";
-import { InstallDataParams } from "./spriggan-shared/types/SearchTypes";
-import { WalletType } from "./spriggan-shared/types/WalletType";
-import { GetNftsRequest, GetNftsResponse } from "./spriggan-shared/types/rpc/GetNfts";
-import { GetWalletsRequest } from "./spriggan-shared/types/rpc/GetWallets";
+import { GetInstallDataRequest } from "./spriggan-shared/types/spriggan/MarketplaceApiTypes";
+import { Media, parseNftMetadata } from "./spriggan-shared/types/spriggan/Media";
+import { NftInfo } from "./spriggan-shared/types/walletconnect/NftInfo";
+import { WalletType } from "./spriggan-shared/types/walletconnect/WalletType";
+import { GetNftsRequest, GetNftsResponse } from "./spriggan-shared/types/walletconnect/rpc/GetNfts";
+import { GetWalletsRequest } from "./spriggan-shared/types/walletconnect/rpc/GetWallets";
 
 export const App = () => {
 
-	const { search } = useMarketplaceApi();
+	const { getInstallData } = useMarketplaceApi();
 	const [, setSearchTerm] = useState<string>("");
 
 	useEffect(() => {
@@ -45,7 +45,9 @@ export const App = () => {
 	};
 
 	const {
-		sprigganRpc,
+		ping,
+		getLocalData,
+		saveLocalData,
 		sprigganRpcResult,
 	} = useSprigganRpc();
 
@@ -53,7 +55,7 @@ export const App = () => {
 		if (sprigganRpcResult?.method === "ping") {
 			const pingRpc = async () => {
 				try {
-					await sprigganRpc.ping({} as SprigganRPCParams);
+					await ping({} as PingRequest);
 					console.log("connected!");
 					return sprigganRpcResult?.valid;
 				} catch (e) {
@@ -72,7 +74,7 @@ export const App = () => {
 
 		return () => true;
 
-	}, [sprigganRpc, sprigganRpcResult]);
+	}, [ping, sprigganRpcResult]);
 
 	const loadNfts = useCallback(
 		async () => {
@@ -111,7 +113,7 @@ export const App = () => {
 				let localData = null;
 				let marketplaceData = null;
 				try {
-					await sprigganRpc.getLocalData({} as SprigganRPCParams);
+					await getLocalData({} as GetLocalDataRequest);
 					localData = sprigganRpcResult?.result;
 					localData = JSON.parse(localData as string) as Media;
 				}
@@ -119,12 +121,12 @@ export const App = () => {
 					console.log("Local Data not found.");
 				}
 				try {
-					marketplaceData = await search.getInstallData({ productId: meta.productId } as InstallDataParams);
-					media.push(marketplaceData);
+					marketplaceData = await getInstallData({ productId: meta.productId } as GetInstallDataRequest);
+					media.push(marketplaceData.installData);
 					console.log("marketplace data", marketplaceData);
 
 					if (marketplaceData !== localData) {
-						await sprigganRpc.saveLocalData({ media: marketplaceData } as SprigganRPCParams);
+						await saveLocalData({ media: marketplaceData } as SaveLocalDataRequest);
 					}
 				}
 				catch (except) {
@@ -132,7 +134,7 @@ export const App = () => {
 				}
 			});
 			return media;
-		}, [search, sprigganRpc, sprigganRpcResult?.result]
+		}, [getInstallData, getLocalData, saveLocalData, sprigganRpcResult?.result]
 	);
 
 	const [searchResults, setSearchResults] = useState<Media[]>([]);

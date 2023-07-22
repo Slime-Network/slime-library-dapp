@@ -4,8 +4,8 @@ import {
 } from '@mui/material';
 import * as React from 'react';
 
+import type { Media } from '../spriggan-shared/types/spriggan/Media';
 import { MediaPage, MediaPageProps } from './MediaPage';
-import type { Media } from '../spriggan-shared/types/Media';
 
 export type MediaCardProps = {
 	media: Media;
