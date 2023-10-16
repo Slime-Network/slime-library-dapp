@@ -1,21 +1,17 @@
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import LinkOffIcon from '@mui/icons-material/LinkOff';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
-import { Divider, ListItemIcon } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
-import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { styled, alpha } from '@mui/material/styles';
 import { SessionTypes } from '@walletconnect/types';
 import { ChangeEvent, useState } from 'react';
 
+import WalletConnectMenu from '../spriggan-shared/components/WalletConnectMenu';
 import ThemeSwitcher from "./ThemeSwitcher";
 
 const Search = styled('div')(({ theme }) => ({
@@ -65,17 +61,8 @@ export const MainTopBar = (
 	setSearchTerm: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void,
 ) => {
 
-	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const [anchor2El, setAnchor2El] = useState<null | HTMLElement>(null);
-	const isWalletMenuOpen = Boolean(anchorEl);
 	const isMainMenuOpen = Boolean(anchor2El);
-
-	const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-		setAnchorEl(event.currentTarget);
-	};
-	const handleClose = () => {
-		setAnchorEl(null);
-	};
 
 	const handleClick2 = (event: React.MouseEvent<HTMLButtonElement>) => {
 		setAnchor2El(event.currentTarget);
@@ -83,61 +70,6 @@ export const MainTopBar = (
 	const handleClose2 = () => {
 		setAnchor2El(null);
 	};
-
-	const handleConnectToWallet = () => {
-		connectToWallet();
-		setAnchorEl(null);
-	};
-
-	const handleDisconnectFromWallet = () => {
-		disconnectFromWallet();
-		setAnchorEl(null);
-	};
-
-	const walletMenuId = 'primary-search-account-wallet-mobile';
-	const renderWalletMenu = (
-		<Menu
-			anchorEl={anchorEl}
-			anchorOrigin={{
-				vertical: 'top',
-				horizontal: 'right',
-			}}
-			id={walletMenuId}
-			keepMounted
-			transformOrigin={{
-				vertical: 'top',
-				horizontal: 'right',
-			}}
-			open={isWalletMenuOpen}
-			onClose={handleClose}
-		>
-			<MenuItem disabled={true}>Wallet</MenuItem>
-			<Divider />
-			{session
-				? <div>
-					<MenuItem
-						onClick={handleDisconnectFromWallet}
-					>
-						<ListItemIcon>
-							<LinkOffIcon fontSize="small" />
-						</ListItemIcon>
-						Disconnect
-					</MenuItem>
-				</div>
-				: <div>
-					<MenuItem
-						onClick={handleConnectToWallet}
-					>
-						<ListItemIcon>
-							<AccountBalanceWalletIcon fontSize="small" />
-						</ListItemIcon>
-						Connect to Chia Wallet
-					</MenuItem>
-				</div>
-
-			}
-		</Menu>
-	);
 
 
 	const mainMenuId = 'primary-search-main';
@@ -195,34 +127,11 @@ export const MainTopBar = (
 						/>
 					</Search>
 					<Box sx={{ flexGrow: 1 }} />
-					<Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-						<IconButton
-							size="large"
-							edge="end"
-							aria-label=""
-							aria-haspopup="true"
-							color="inherit"
-							onClick={handleClick}
-						>
-							{session
-								? <Badge variant="dot" overlap="circular" color="success" anchorOrigin={{
-									vertical: 'bottom',
-									horizontal: 'left',
-								}}>
-									<AccountBalanceWalletIcon />
-								</Badge>
-								: <Badge variant="dot" overlap="circular" color="warning" anchorOrigin={{
-									vertical: 'bottom',
-									horizontal: 'left',
-								}}>
-									<AccountBalanceWalletIcon />
-								</Badge>
-							}
-						</IconButton>
+					<Box sx={{ display: { xs: 'flex' } }}>
+						{WalletConnectMenu(session, connectToWallet, disconnectFromWallet)}
 					</Box>
 				</Toolbar>
 			</AppBar>
-			{renderWalletMenu}
 			{renderMainMenu}
 		</Box>
 	);

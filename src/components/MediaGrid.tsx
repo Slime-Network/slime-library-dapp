@@ -20,10 +20,7 @@ export const MediaGrid = (
 							/>
 						</Grid>;
 					}
-					return <Grid item xs={6} sm={4} md={3} lg={2}>
-						<Typography sx={{ p: 2 }}>{title} Data Not Found</Typography>
-					</Grid>;
-
+					return null;
 				})}
 			</Grid>
 		) : (

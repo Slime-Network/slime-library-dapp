@@ -1,14 +1,22 @@
+import CheckTwoToneIcon from '@mui/icons-material/CheckTwoTone';
 import CloseIcon from '@mui/icons-material/Close';
+import CloseTwoToneIcon from '@mui/icons-material/CloseTwoTone';
+import DownloadIcon from '@mui/icons-material/Download';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 import {
-	Grid, Tab, Tabs, Dialog, Container, Typography,
-	CardMedia, AppBar, Toolbar, Card, Slide, IconButton, Box,
-	Stack, Divider, SlideProps
+	Grid, Dialog, Container, Typography, AppBar, Toolbar, Card, Slide, IconButton,
+	Stack, Divider, SlideProps, Switch, Button, Box
 } from '@mui/material';
+import CircularProgress, {
+	CircularProgressProps,
+} from '@mui/material/CircularProgress';
 import * as React from 'react';
 import { Dispatch, SetStateAction } from 'react';
 import ReactMarkdown from 'react-markdown';
 
+import { useSprigganRpc } from '../spriggan-shared/contexts/SprigganRpcContext';
 import { Media } from '../spriggan-shared/types/spriggan/Media';
+import { DownloadMediaRequest, GetInstallStatusRequest, GetInstallStatusResponse, InstallMediaRequest, InstallStatus, PlayMediaRequest } from '../spriggan-shared/types/spriggan/SprigganRpcTypes';
 
 const Transition = React.forwardRef((props: SlideProps, ref) => <Slide direction="up" ref={ref} {...props} />);
 
@@ -18,48 +26,62 @@ export type TabPanelProps = {
 	value: number,
 };
 
-const TabPanel = (props: TabPanelProps) => {
-	const { children, value, index, ...other } = props;
-
+function CircularProgressWithLabel(
+	props: CircularProgressProps & { value: number },
+) {
 	return (
-		<div
-			role="tabpanel"
-			hidden={value !== index}
-			id={`full-width-tabpanel-${index}`}
-			aria-labelledby={`full-width-tab-${index}`}
-			{...other}
-		>
-			{value === index && (
-				<Box sx={{ p: 3 }}>
-					<Typography>{children}</Typography>
-				</Box>
-			)}
-		</div>
+		<Box sx={{ position: 'relative', display: 'inline-flex' }}>
+			<CircularProgress variant="determinate" {...props} />
+			<Box
+				sx={{
+					top: 0,
+					left: 0,
+					bottom: 0,
+					right: 0,
+					position: 'absolute',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+				}}
+			>
+				<Typography
+					variant="caption"
+					component="div"
+					color="text.secondary"
+				>{`${Math.round(props.value)}%`}</Typography>
+			</Box>
+		</Box>
 	);
-};
-
-const TabProps = (index: number) => ({
-	id: `full-width-tab-${index}`,
-	'aria-controls': `full-width-tabpanel-${index}`,
-});
+}
 
 export type MediaPageProps = {
 	media: Media;
-	launch: () => void;
 	open: boolean,
 	setOpen: Dispatch<SetStateAction<boolean>>
 };
 
 export const MediaPage = (props: MediaPageProps) => {
 
-	const [tab, setTab] = React.useState(0);
+	const { downloadMedia, installMedia, getInstallStatus, getTorrentStatus, deleteMedia, uninstallMedia, playMedia } = useSprigganRpc();
+
+	const [status, setStatus] = React.useState<InstallStatus>();
+
+	React.useEffect(() => {
+		const interval = setInterval(async () => {
+			if (props.open) {
+				try {
+					const result = (await getInstallStatus({ media: props.media } as GetInstallStatusRequest)).result as GetInstallStatusResponse;
+					setStatus(result.status);
+				} catch (error) {
+					console.log("error: ", error);
+				}
+			}
+		}, 1000);
+		return () => clearInterval(interval);
+	}, [getInstallStatus, getTorrentStatus, props.media, props.open]);
 
 	const handleClose = () => {
 		props.setOpen(false);
-	};
-
-	const handleTabChange = (event: React.SyntheticEvent<Element, Event>, newValue: number) => {
-		setTab(newValue);
 	};
 
 	return (
@@ -85,32 +107,72 @@ export const MediaPage = (props: MediaPageProps) => {
 				</Toolbar>
 			</AppBar>
 			<Container fixed>
-				<AppBar position="static">
-					<Tabs
-						value={tab}
-						onChange={handleTabChange}
-						indicatorColor="secondary"
-						textColor="inherit"
-						variant="fullWidth"
-					>
-						<Tab label="Trailer" {...TabProps(0)} />
-						<Tab label="Screenshots" {...TabProps(1)} />
-					</Tabs>
-				</AppBar>
 				<Grid container height={420} sx={{ width: '100%', m: 0 }}>
 					<Grid id="mediaSection" item xs={12} md={8} sx={{ m: 0, p: 0, height: '100%' }}>
-						<TabPanel value={tab} index={0}>
-							<Card sx={{ m: 0, p: 2, height: '100%' }} >
-								<CardMedia
-									component="iframe"
-									src={(props.media.trailerSource === 'youtube') ? `https://www.youtube.com/embed/${props.media.trailer}?autoplay=1&origin=http://.com` : ""}
-									height={'360'}
-								/>
-							</Card>
-						</TabPanel>
-						<TabPanel value={tab} index={1}>
-							asdf
-						</TabPanel>
+						<Card sx={{ m: 0, p: 2, height: '100%' }} >
+							<Grid container height={420} sx={{ width: '100%', m: 0 }}>
+								<Grid item xs={3} sx={{ m: 0, p: 0 }}>
+									<Typography p={1}>Downloaded:</Typography>
+								</Grid>
+								<Grid item xs={2} sx={{ m: 0, p: 0 }}>
+									{status?.isDownloading
+										?
+										<CircularProgressWithLabel value={status?.progress} />
+										:
+										status?.isDownloaded ? <CheckTwoToneIcon /> : <CloseTwoToneIcon />
+									}
+
+								</Grid>
+								<Grid item xs={6} sx={{ m: 0, p: 0 }}>
+									{status?.isDownloaded ?
+										<Button variant='contained'>Delete</Button>
+										:
+										<Button variant='contained' onClick={() => {
+											downloadMedia({ media: props.media } as DownloadMediaRequest);
+										}}>Download</Button>
+									}
+									{status?.isDownloading &&
+										<Button variant='contained' onClick={() => {
+											deleteMedia({ media: props.media } as DownloadMediaRequest);
+										}}>Cancel</Button>
+									}
+								</Grid>
+								<Grid item xs={3} sx={{ m: 0, p: 0 }}>
+									<Typography p={1}>Installed:</Typography>
+								</Grid>
+								<Grid item xs={2} sx={{ m: 0, p: 0 }}>
+									{status?.isInstalled ? <CheckTwoToneIcon /> : <CloseTwoToneIcon />}
+								</Grid>
+								<Grid item xs={6} sx={{ m: 0, p: 0 }}>
+									{status?.isInstalled ?
+										<Button variant='contained' onClick={() => {
+											uninstallMedia({ media: props.media } as InstallMediaRequest);
+										}}>Uninstall</Button>
+										:
+										<Button variant='contained' onClick={() => {
+											installMedia({ media: props.media } as InstallMediaRequest);
+										}}>Install</Button>
+									}
+								</Grid>
+								<Grid item xs={3} sx={{ m: 0, p: 0 }}>
+									<Typography p={1}>Seeding:</Typography>
+								</Grid>
+								<Grid item xs={2} sx={{ m: 0, p: 0 }}>
+									{status?.isSeeding ? <CheckTwoToneIcon /> : <CloseTwoToneIcon />}
+								</Grid>
+								<Grid item xs={6} sx={{ m: 0, p: 0 }}>
+									<Switch disabled={!status?.isDownloaded} value={status?.isSeeding} onChange={() => { }} />
+									<FileUploadIcon />{status?.uploadRate} <DownloadIcon />{status?.downloadRate}
+								</Grid>
+								<Grid item xs={3} sx={{ m: 0, p: 0 }}>
+									<Button onClick={
+										() => {
+											playMedia({ media: props.media } as PlayMediaRequest);
+										}
+									}>Launch</Button>
+								</Grid>
+							</Grid>
+						</Card>
 					</Grid>
 					<Grid id="infoSection" item xs={12} md={4} sx={{ height: '100%' }}>
 						<Stack sx={{ height: '100%' }}>
@@ -127,8 +189,8 @@ export const MediaPage = (props: MediaPageProps) => {
 						<ReactMarkdown children={props.media.longDescription} />
 					</Card>
 				</Grid>
-			</Container>
-		</Dialog>
+			</Container >
+		</Dialog >
 	);
 };
 

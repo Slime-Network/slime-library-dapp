@@ -15,8 +15,6 @@ export const MediaCard = (props: MediaCardProps) => {
 
 	const [open, setOpen] = React.useState(false);
 
-	console.log("props: ", props);
-
 	const handleClickOpen = () => {
 		setOpen(true);
 	};

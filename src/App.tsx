@@ -6,10 +6,11 @@ import { MainTopBar } from "./components/MainTopBar";
 import { MediaGrid } from "./components/MediaGrid";
 import { useJsonRpc } from "./spriggan-shared/contexts/JsonRpcContext";
 import { useMarketplaceApi } from "./spriggan-shared/contexts/MarketplaceApiContext";
-import { GetLocalDataRequest, PingRequest, SaveLocalDataRequest, useSprigganRpc } from "./spriggan-shared/contexts/SprigganRpcContext";
+import { useSprigganRpc } from "./spriggan-shared/contexts/SprigganRpcContext";
 import { useWalletConnect } from "./spriggan-shared/contexts/WalletConnectContext";
 import { GetInstallDataRequest } from "./spriggan-shared/types/spriggan/MarketplaceApiTypes";
 import { Media, parseNftMetadata } from "./spriggan-shared/types/spriggan/Media";
+import { GetLocalDataRequest, GetLocalDataResponse, PingRequest, SaveLocalDataRequest } from "./spriggan-shared/types/spriggan/SprigganRpcTypes";
 import { NftInfo } from "./spriggan-shared/types/walletconnect/NftInfo";
 import { WalletType } from "./spriggan-shared/types/walletconnect/WalletType";
 import { GetNftsRequest, GetNftsResponse } from "./spriggan-shared/types/walletconnect/rpc/GetNfts";
@@ -113,20 +114,20 @@ export const App = () => {
 				let localData = null;
 				let marketplaceData = null;
 				try {
-					await getLocalData({} as GetLocalDataRequest);
-					localData = sprigganRpcResult?.result;
-					localData = JSON.parse(localData as string) as Media;
+					localData = await getLocalData({} as GetLocalDataRequest);
+					localData = (localData.result as GetLocalDataResponse).media;
 				}
 				catch (except) {
 					console.log("Local Data not found.");
 				}
 				try {
-					marketplaceData = await getInstallData({ productId: meta.productId } as GetInstallDataRequest);
+					// need signature
+					marketplaceData = await getInstallData({ media: { productId: meta.productId }, pubkey: "pubkey", signature: "signature" } as GetInstallDataRequest);
 					media.push(marketplaceData.installData);
 					console.log("marketplace data", marketplaceData);
 
-					if (marketplaceData !== localData) {
-						await saveLocalData({ media: marketplaceData } as SaveLocalDataRequest);
+					if (marketplaceData.installData !== localData) {
+						await saveLocalData({ media: marketplaceData.installData } as SaveLocalDataRequest);
 					}
 				}
 				catch (except) {
@@ -134,7 +135,7 @@ export const App = () => {
 				}
 			});
 			return media;
-		}, [getInstallData, getLocalData, saveLocalData, sprigganRpcResult?.result]
+		}, [getInstallData, getLocalData, saveLocalData]
 	);
 
 	const [searchResults, setSearchResults] = useState<Media[]>([]);
