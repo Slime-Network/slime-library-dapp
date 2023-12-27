@@ -4,17 +4,17 @@ import { useCallback, useEffect, useState } from "react";
 
 import { MainTopBar } from "./components/MainTopBar";
 import { MediaGrid } from "./components/MediaGrid";
-import { useJsonRpc } from "./spriggan-shared/contexts/JsonRpcContext";
-import { useMarketplaceApi } from "./spriggan-shared/contexts/MarketplaceApiContext";
-import { useSprigganRpc } from "./spriggan-shared/contexts/SprigganRpcContext";
-import { useWalletConnect } from "./spriggan-shared/contexts/WalletConnectContext";
-import { GetInstallDataRequest } from "./spriggan-shared/types/spriggan/MarketplaceApiTypes";
-import { Media, parseNftMetadata } from "./spriggan-shared/types/spriggan/Media";
-import { GetLocalDataRequest, GetLocalDataResponse, PingRequest, SaveLocalDataRequest } from "./spriggan-shared/types/spriggan/SprigganRpcTypes";
-import { NftInfo } from "./spriggan-shared/types/walletconnect/NftInfo";
-import { WalletType } from "./spriggan-shared/types/walletconnect/WalletType";
-import { GetNftsRequest, GetNftsResponse } from "./spriggan-shared/types/walletconnect/rpc/GetNfts";
-import { GetWalletsRequest } from "./spriggan-shared/types/walletconnect/rpc/GetWallets";
+import { useGostiRpc } from "./gosti-shared/contexts/GostiRpcContext";
+import { useJsonRpc } from "./gosti-shared/contexts/JsonRpcContext";
+import { useMarketplaceApi } from "./gosti-shared/contexts/MarketplaceApiContext";
+import { useWalletConnect } from "./gosti-shared/contexts/WalletConnectContext";
+import { GetLocalDataRequest, GetLocalDataResponse, PingRequest, SaveLocalDataRequest } from "./gosti-shared/types/gosti/GostiRpcTypes";
+import { GetInstallDataRequest } from "./gosti-shared/types/gosti/MarketplaceApiTypes";
+import { Media, parseNftMetadata } from "./gosti-shared/types/gosti/Media";
+import { NftInfo } from "./gosti-shared/types/walletconnect/NftInfo";
+import { WalletType } from "./gosti-shared/types/walletconnect/WalletType";
+import { GetNftsRequest, GetNftsResponse } from "./gosti-shared/types/walletconnect/rpc/GetNfts";
+import { GetWalletsRequest } from "./gosti-shared/types/walletconnect/rpc/GetWallets";
 
 export const App = () => {
 
@@ -22,7 +22,7 @@ export const App = () => {
 	const [, setSearchTerm] = useState<string>("");
 
 	useEffect(() => {
-		document.title = `Spriggan Library`;
+		document.title = `Gosti Library`;
 	}, []);
 
 	const { client, session, pairings, connect, disconnect } =
@@ -49,16 +49,16 @@ export const App = () => {
 		ping,
 		getLocalData,
 		saveLocalData,
-		sprigganRpcResult,
-	} = useSprigganRpc();
+		gostiRpcResult,
+	} = useGostiRpc();
 
 	useEffect(() => {
-		if (sprigganRpcResult?.method === "ping") {
+		if (gostiRpcResult?.method === "ping") {
 			const pingRpc = async () => {
 				try {
 					await ping({} as PingRequest);
 					console.log("connected!");
-					return sprigganRpcResult?.valid;
+					return gostiRpcResult?.valid;
 				} catch (e) {
 					console.log("ping fail", e);
 					return false;
@@ -75,7 +75,7 @@ export const App = () => {
 
 		return () => true;
 
-	}, [ping, sprigganRpcResult]);
+	}, [ping, gostiRpcResult]);
 
 	const loadNfts = useCallback(
 		async () => {

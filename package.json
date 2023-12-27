@@ -1,9 +1,9 @@
 {
-	"name": "spriggan-client",
+	"name": "gosti-client",
 	"version": "0.1.0",
 	"author": "Gaerax <gaerax@gmail.com>",
 	"license": "Apache-2.0",
-	"description": "Spriggan Library",
+	"description": "Gosti Library",
 	"private": true,
 	"homepage": "./",
 	"dependencies": {

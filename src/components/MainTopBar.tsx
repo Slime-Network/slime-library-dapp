@@ -11,7 +11,7 @@ import { styled, alpha } from '@mui/material/styles';
 import { SessionTypes } from '@walletconnect/types';
 import { ChangeEvent, useState } from 'react';
 
-import WalletConnectMenu from '../spriggan-shared/components/WalletConnectMenu';
+import WalletConnectMenu from '../gosti-shared/components/WalletConnectMenu';
 import ThemeSwitcher from "./ThemeSwitcher";
 
 const Search = styled('div')(({ theme }) => ({
@@ -114,7 +114,7 @@ export const MainTopBar = (
 						component="div"
 						sx={{ display: { xs: 'none', sm: 'block' } }}
 					>
-						Spriggan Library
+						Gosti Library
 					</Typography>
 					<Search>
 						<SearchIconWrapper>

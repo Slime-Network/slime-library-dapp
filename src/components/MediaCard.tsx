@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 import * as React from 'react';
 
-import type { Media } from '../spriggan-shared/types/spriggan/Media';
+import type { Media } from '../gosti-shared/types/gosti/Media';
 import { MediaPage, MediaPageProps } from './MediaPage';
 
 export type MediaCardProps = {

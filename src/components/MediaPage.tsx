@@ -14,9 +14,9 @@ import * as React from 'react';
 import { Dispatch, SetStateAction } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import { useSprigganRpc } from '../spriggan-shared/contexts/SprigganRpcContext';
-import { Media } from '../spriggan-shared/types/spriggan/Media';
-import { DownloadMediaRequest, GetInstallStatusRequest, GetInstallStatusResponse, InstallMediaRequest, InstallStatus, PlayMediaRequest } from '../spriggan-shared/types/spriggan/SprigganRpcTypes';
+import { useGostiRpc } from '../gosti-shared/contexts/GostiRpcContext';
+import { DownloadMediaRequest, GetInstallStatusRequest, GetInstallStatusResponse, InstallMediaRequest, InstallStatus, PlayMediaRequest } from '../gosti-shared/types/gosti/GostiRpcTypes';
+import { Media } from '../gosti-shared/types/gosti/Media';
 
 const Transition = React.forwardRef((props: SlideProps, ref) => <Slide direction="up" ref={ref} {...props} />);
 
@@ -62,7 +62,7 @@ export type MediaPageProps = {
 
 export const MediaPage = (props: MediaPageProps) => {
 
-	const { downloadMedia, installMedia, getInstallStatus, getTorrentStatus, deleteMedia, uninstallMedia, playMedia } = useSprigganRpc();
+	const { downloadMedia, installMedia, getInstallStatus, getTorrentStatus, deleteMedia, uninstallMedia, playMedia } = useGostiRpc();
 
 	const [status, setStatus] = React.useState<InstallStatus>();
 

@@ -5,11 +5,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import { App } from './App';
-import { CHAIN_ID, PROJECT_ID, RELAY_URL } from './spriggan-shared/constants/env';
-import { JsonRpcProvider } from './spriggan-shared/contexts/JsonRpcContext';
-import { MarketplaceApiContextProvider } from './spriggan-shared/contexts/MarketplaceApiContext';
-import { SprigganRpcContextProvider } from './spriggan-shared/contexts/SprigganRpcContext';
-import { WalletConnectProvider } from './spriggan-shared/contexts/WalletConnectContext';
+import { CHAIN_ID, PROJECT_ID, RELAY_URL } from './gosti-shared/constants/env';
+import { GostiRpcContextProvider } from './gosti-shared/contexts/GostiRpcContext';
+import { JsonRpcProvider } from './gosti-shared/contexts/JsonRpcContext';
+import { MarketplaceApiContextProvider } from './gosti-shared/contexts/MarketplaceApiContext';
+import { WalletConnectProvider } from './gosti-shared/contexts/WalletConnectContext';
 
 const theme = extendTheme({
 	colorSchemes: {
@@ -35,12 +35,12 @@ root.render(
 				relayUrl={RELAY_URL}
 				chainId={CHAIN_ID}>
 				<JsonRpcProvider>
-					<SprigganRpcContextProvider>
+					<GostiRpcContextProvider>
 						<MarketplaceApiContextProvider>
 							<CssBaseline />
 							<App />
 						</MarketplaceApiContextProvider>
-					</SprigganRpcContextProvider>
+					</GostiRpcContextProvider>
 				</JsonRpcProvider>
 			</WalletConnectProvider>
 		</CssVarsProvider>

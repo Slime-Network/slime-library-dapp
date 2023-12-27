@@ -1,1 +1,1 @@
-# spriggan-library-dapp
+# gosti-library-dapp
