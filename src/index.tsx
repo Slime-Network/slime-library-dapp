@@ -6,10 +6,10 @@ import ReactDOM from 'react-dom/client';
 
 import { App } from './App';
 import { CHAIN_ID, PROJECT_ID, RELAY_URL } from './gosti-shared/constants/env';
-import { GostiRpcContextProvider } from './gosti-shared/contexts/GostiRpcContext';
-import { JsonRpcProvider } from './gosti-shared/contexts/JsonRpcContext';
+import { GostiApiContextProvider } from "./gosti-shared/contexts/GostiApiContext";
 import { MarketplaceApiContextProvider } from './gosti-shared/contexts/MarketplaceApiContext';
 import { WalletConnectProvider } from './gosti-shared/contexts/WalletConnectContext';
+import { WalletConnectRpcProvider } from "./gosti-shared/contexts/WalletConnectRpcContext";
 
 const theme = extendTheme({
 	colorSchemes: {
@@ -34,16 +34,16 @@ root.render(
 				projectId={PROJECT_ID}
 				relayUrl={RELAY_URL}
 				chainId={CHAIN_ID}>
-				<JsonRpcProvider>
-					<GostiRpcContextProvider>
+				<WalletConnectRpcProvider>
+					<GostiApiContextProvider>
 						<MarketplaceApiContextProvider>
 							<CssBaseline />
 							<App />
 						</MarketplaceApiContextProvider>
-					</GostiRpcContextProvider>
-				</JsonRpcProvider>
+					</GostiApiContextProvider>
+				</WalletConnectRpcProvider>
 			</WalletConnectProvider>
-		</CssVarsProvider>
+		</CssVarsProvider >
 	</React.StrictMode >
 );
 

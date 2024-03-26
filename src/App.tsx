@@ -4,17 +4,18 @@ import { useCallback, useEffect, useState } from "react";
 
 import { MainTopBar } from "./components/MainTopBar";
 import { MediaGrid } from "./components/MediaGrid";
-import { useGostiRpc } from "./gosti-shared/contexts/GostiRpcContext";
-import { useJsonRpc } from "./gosti-shared/contexts/JsonRpcContext";
+import { useGostiApi } from "./gosti-shared/contexts/GostiApiContext";
 import { useMarketplaceApi } from "./gosti-shared/contexts/MarketplaceApiContext";
 import { useWalletConnect } from "./gosti-shared/contexts/WalletConnectContext";
-import { GetLocalDataRequest, GetLocalDataResponse, PingRequest, SaveLocalDataRequest } from "./gosti-shared/types/gosti/GostiRpcTypes";
+import { useWalletConnectRpc } from "./gosti-shared/contexts/WalletConnectRpcContext";
+import { GetLocalMediaMetadataRequest, SaveLocalMediaMetadataRequest } from "./gosti-shared/types/gosti/GostiRpcTypes";
 import { GetInstallDataRequest } from "./gosti-shared/types/gosti/MarketplaceApiTypes";
 import { Media, parseNftMetadata } from "./gosti-shared/types/gosti/Media";
 import { NftInfo } from "./gosti-shared/types/walletconnect/NftInfo";
 import { WalletType } from "./gosti-shared/types/walletconnect/WalletType";
 import { GetNftsRequest, GetNftsResponse } from "./gosti-shared/types/walletconnect/rpc/GetNfts";
 import { GetWalletsRequest } from "./gosti-shared/types/walletconnect/rpc/GetWallets";
+import { RequestPermissionsRequest } from "./gosti-shared/types/walletconnect/rpc/RequestPermissions";
 
 export const App = () => {
 
@@ -25,13 +26,15 @@ export const App = () => {
 		document.title = `Gosti Library`;
 	}, []);
 
-	const { client, session, pairings, connect, disconnect } =
-		useWalletConnect();
+	const { client, session, pairings, connect, disconnect } = useWalletConnect();
 
 	const {
+		requestPermissions,
 		getWallets,
 		getNfts,
-	} = useJsonRpc();
+	} = useWalletConnectRpc();
+
+	const { saveLocalMediaMetadata, getLocalMediaMetadata } = useGostiApi();
 
 	const onConnect = () => {
 		if (!client) throw new Error('WalletConnect is not initialized.');
@@ -45,37 +48,6 @@ export const App = () => {
 		}
 	};
 
-	const {
-		ping,
-		getLocalData,
-		saveLocalData,
-		gostiRpcResult,
-	} = useGostiRpc();
-
-	useEffect(() => {
-		if (gostiRpcResult?.method === "ping") {
-			const pingRpc = async () => {
-				try {
-					await ping({} as PingRequest);
-					console.log("connected!");
-					return gostiRpcResult?.valid;
-				} catch (e) {
-					console.log("ping fail", e);
-					return false;
-				}
-			};
-
-			const interval = setInterval(() => {
-				// This will run every 10 mins
-				console.log("Ping: ", pingRpc());
-			}, 1000 * 60 * 1);
-
-			return () => clearInterval(interval);
-		}
-
-		return () => true;
-
-	}, [ping, gostiRpcResult]);
 
 	const loadNfts = useCallback(
 		async () => {
@@ -114,8 +86,7 @@ export const App = () => {
 				let localData = null;
 				let marketplaceData = null;
 				try {
-					localData = await getLocalData({} as GetLocalDataRequest);
-					localData = (localData.result as GetLocalDataResponse).media;
+					localData = await getLocalMediaMetadata({ productId: meta.productId } as GetLocalMediaMetadataRequest);
 				}
 				catch (except) {
 					console.log("Local Data not found.");
@@ -123,26 +94,36 @@ export const App = () => {
 				try {
 					// need signature
 					marketplaceData = await getInstallData({ media: { productId: meta.productId }, pubkey: "pubkey", signature: "signature" } as GetInstallDataRequest);
-					media.push(marketplaceData.installData);
-					console.log("marketplace data", marketplaceData);
-
-					if (marketplaceData.installData !== localData) {
-						await saveLocalData({ media: marketplaceData.installData } as SaveLocalDataRequest);
-					}
 				}
 				catch (except) {
 					console.log("Marketplace Data not found.");
 				}
+				if (localData) {
+					if (marketplaceData) {
+						// if (semver.gt(marketplaceData?.installData?.version || "0.0.1", localData?.media?.version || "0.0.1")) {
+						saveLocalMediaMetadata({ media: marketplaceData.installData } as SaveLocalMediaMetadataRequest);
+						// }
+						media.push(marketplaceData.installData);
+					} else {
+						media.push(localData.media);
+					}
+				}
+				else if (marketplaceData) {
+					media.push(marketplaceData.installData);
+					const saveResp = await saveLocalMediaMetadata({ media: marketplaceData.installData } as SaveLocalMediaMetadataRequest);
+					console.log("saveLocalMediaMetadata", saveResp);
+				}
 			});
 			return media;
-		}, [getInstallData, getLocalData, saveLocalData]
+		}, [getInstallData, getLocalMediaMetadata, saveLocalMediaMetadata]
 	);
 
 	const [searchResults, setSearchResults] = useState<Media[]>([]);
 
 	useEffect(() => {
-		console.log("session", session);
 		const fetch = async () => {
+			const permsResp = await requestPermissions({ commands: ["getWallets", "getNFTs"] } as RequestPermissionsRequest);
+			console.log("permsResp", permsResp);
 			const results = await loadMediaData(await loadNfts());
 			setSearchResults(results);
 		};
@@ -150,15 +131,7 @@ export const App = () => {
 			console.log("fetching");
 			fetch();
 		}
-
-		const interval = setInterval(() => {
-			// This will run every 10 mins
-			console.log("LoadNfts: ", fetch());
-		}, 1000 * 60 * 10);
-
-		return () => clearInterval(interval);
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- dd
-	}, [session]);
+	}, [loadMediaData, loadNfts, requestPermissions, session]);
 
 	return (
 		<Box>

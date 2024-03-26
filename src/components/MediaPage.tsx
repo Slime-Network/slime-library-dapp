@@ -4,8 +4,8 @@ import CloseTwoToneIcon from '@mui/icons-material/CloseTwoTone';
 import DownloadIcon from '@mui/icons-material/Download';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import {
-	Grid, Dialog, Container, Typography, AppBar, Toolbar, Card, Slide, IconButton,
-	Stack, Divider, SlideProps, Switch, Button, Box
+	Grid, Dialog, Typography, AppBar, Toolbar, Paper, Slide, IconButton,
+	Stack, Divider, SlideProps, Switch, Button, Box, Chip
 } from '@mui/material';
 import CircularProgress, {
 	CircularProgressProps,
@@ -14,8 +14,8 @@ import * as React from 'react';
 import { Dispatch, SetStateAction } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import { useGostiRpc } from '../gosti-shared/contexts/GostiRpcContext';
-import { DownloadMediaRequest, GetInstallStatusRequest, GetInstallStatusResponse, InstallMediaRequest, InstallStatus, PlayMediaRequest } from '../gosti-shared/types/gosti/GostiRpcTypes';
+import { useGostiApi } from '../gosti-shared/contexts/GostiApiContext';
+import { DownloadMediaRequest, GetInstallStatusRequest, InstallMediaRequest, InstallStatus, LaunchMediaRequest } from '../gosti-shared/types/gosti/GostiRpcTypes';
 import { Media } from '../gosti-shared/types/gosti/Media';
 
 const Transition = React.forwardRef((props: SlideProps, ref) => <Slide direction="up" ref={ref} {...props} />);
@@ -62,32 +62,39 @@ export type MediaPageProps = {
 
 export const MediaPage = (props: MediaPageProps) => {
 
-	const { downloadMedia, installMedia, getInstallStatus, getTorrentStatus, deleteMedia, uninstallMedia, playMedia } = useGostiRpc();
+	const { media, open, setOpen } = props;
 
 	const [status, setStatus] = React.useState<InstallStatus>();
+	const [updateStatus, setUpdateStatus] = React.useState<boolean>();
+
+	const { downloadMedia, getInstallStatus, installMedia, uninstallMedia, launchMedia, deleteMedia } = useGostiApi();
 
 	React.useEffect(() => {
-		const interval = setInterval(async () => {
-			if (props.open) {
+		const getStatus = async () => {
+			if (open) {
 				try {
-					const result = (await getInstallStatus({ media: props.media } as GetInstallStatusRequest)).result as GetInstallStatusResponse;
-					setStatus(result.status);
+					const result = await getInstallStatus({ media } as GetInstallStatusRequest);
+					console.log("getInstallStatus result: ", result);
+					setStatus(undefined);
 				} catch (error) {
 					console.log("error: ", error);
 				}
 			}
-		}, 1000);
-		return () => clearInterval(interval);
-	}, [getInstallStatus, getTorrentStatus, props.media, props.open]);
+		};
+		if (updateStatus) {
+			getStatus();
+			setUpdateStatus(false);
+		}
+	}, [getInstallStatus, media, open, updateStatus]);
 
 	const handleClose = () => {
-		props.setOpen(false);
+		setOpen(false);
 	};
 
 	return (
 		<Dialog
 			fullScreen
-			open={props.open}
+			open={open}
 			onClose={handleClose}
 			TransitionComponent={Transition}
 		>
@@ -102,94 +109,109 @@ export const MediaPage = (props: MediaPageProps) => {
 						<CloseIcon />
 					</IconButton>
 					<Typography sx={{ ml: 2, flex: 1 }} variant="h6">
-						{props.media.title}
+						{media.title}
 					</Typography>
 				</Toolbar>
 			</AppBar>
-			<Container fixed>
-				<Grid container height={420} sx={{ width: '100%', m: 0 }}>
-					<Grid id="mediaSection" item xs={12} md={8} sx={{ m: 0, p: 0, height: '100%' }}>
-						<Card sx={{ m: 0, p: 2, height: '100%' }} >
-							<Grid container height={420} sx={{ width: '100%', m: 0 }}>
-								<Grid item xs={3} sx={{ m: 0, p: 0 }}>
-									<Typography p={1}>Downloaded:</Typography>
-								</Grid>
-								<Grid item xs={2} sx={{ m: 0, p: 0 }}>
-									{status?.isDownloading
-										?
-										<CircularProgressWithLabel value={status?.progress} />
-										:
-										status?.isDownloaded ? <CheckTwoToneIcon /> : <CloseTwoToneIcon />
-									}
-
-								</Grid>
-								<Grid item xs={6} sx={{ m: 0, p: 0 }}>
-									{status?.isDownloaded ?
-										<Button variant='contained'>Delete</Button>
-										:
-										<Button variant='contained' onClick={() => {
-											downloadMedia({ media: props.media } as DownloadMediaRequest);
-										}}>Download</Button>
-									}
-									{status?.isDownloading &&
-										<Button variant='contained' onClick={() => {
-											deleteMedia({ media: props.media } as DownloadMediaRequest);
-										}}>Cancel</Button>
-									}
-								</Grid>
-								<Grid item xs={3} sx={{ m: 0, p: 0 }}>
-									<Typography p={1}>Installed:</Typography>
-								</Grid>
-								<Grid item xs={2} sx={{ m: 0, p: 0 }}>
-									{status?.isInstalled ? <CheckTwoToneIcon /> : <CloseTwoToneIcon />}
-								</Grid>
-								<Grid item xs={6} sx={{ m: 0, p: 0 }}>
-									{status?.isInstalled ?
-										<Button variant='contained' onClick={() => {
-											uninstallMedia({ media: props.media } as InstallMediaRequest);
-										}}>Uninstall</Button>
-										:
-										<Button variant='contained' onClick={() => {
-											installMedia({ media: props.media } as InstallMediaRequest);
-										}}>Install</Button>
-									}
-								</Grid>
-								<Grid item xs={3} sx={{ m: 0, p: 0 }}>
-									<Typography p={1}>Seeding:</Typography>
-								</Grid>
-								<Grid item xs={2} sx={{ m: 0, p: 0 }}>
-									{status?.isSeeding ? <CheckTwoToneIcon /> : <CloseTwoToneIcon />}
-								</Grid>
-								<Grid item xs={6} sx={{ m: 0, p: 0 }}>
-									<Switch disabled={!status?.isDownloaded} value={status?.isSeeding} onChange={() => { }} />
-									<FileUploadIcon />{status?.uploadRate} <DownloadIcon />{status?.downloadRate}
-								</Grid>
-								<Grid item xs={3} sx={{ m: 0, p: 0 }}>
-									<Button onClick={
-										() => {
-											playMedia({ media: props.media } as PlayMediaRequest);
-										}
-									}>Launch</Button>
-								</Grid>
+			<Grid container sx={{ width: '100%' }}>
+				<Grid id="mediaSection" item xs={12} md={8}>
+					<Paper sx={{ height: '100%', m: 2 }} >
+						<Grid container height={420} sx={{ width: '100%' }}>
+							<Grid item xs={3} sx={{}}>
+								<Typography p={1}>Downloaded:</Typography>
 							</Grid>
-						</Card>
-					</Grid>
-					<Grid id="infoSection" item xs={12} md={4} sx={{ height: '100%' }}>
-						<Stack sx={{ height: '100%' }}>
-							<Card sx={{ p: 1, m: 1, height: '60%' }}>
-								<Typography p={1} variant="h5">{props.media.title}</Typography>
-								<Divider />
-								<Typography p={2}>{props.media.description}</Typography>
-								<Divider />
-								<Typography p={2}>{props.media.tags}</Typography>
-							</Card>
-						</Stack>
-					</Grid>
-					<Card sx={{ m: 1, p: 4, width: '100%' }}>
-						<ReactMarkdown children={props.media.longDescription} />
-					</Card>
+							<Grid item xs={2} sx={{}}>
+								{status?.isDownloading
+									?
+									<CircularProgressWithLabel value={status?.progress} />
+									:
+									status?.isDownloaded ? <CheckTwoToneIcon /> : <CloseTwoToneIcon />
+								}
+
+							</Grid>
+							<Grid item xs={6} sx={{}}>
+								{status?.isDownloaded ?
+									<Button variant='contained'>Delete</Button>
+									:
+									<Button variant='contained' onClick={async () => {
+										const resp = await downloadMedia({ media } as DownloadMediaRequest);
+										console.log("downloadMedia resp: ", resp);
+										setUpdateStatus(true);
+									}}>Download</Button>
+								}
+								{status?.isDownloading &&
+									<Button variant='contained' onClick={async () => {
+										const resp = await deleteMedia({ media } as DownloadMediaRequest);
+										console.log("deleteMedia resp: ", resp);
+										setUpdateStatus(true);
+									}}>Cancel</Button>
+								}
+							</Grid>
+							<Grid item xs={3} sx={{}}>
+								<Typography p={1}>Installed:</Typography>
+							</Grid>
+							<Grid item xs={2} sx={{}}>
+								{status?.isInstalled ? <CheckTwoToneIcon /> : <CloseTwoToneIcon />}
+							</Grid>
+							<Grid item xs={6} sx={{}}>
+								{status?.isInstalled ?
+									<Button variant='contained' onClick={async () => {
+										const resp = await uninstallMedia({ media } as InstallMediaRequest);
+										console.log("uninstallMedia resp: ", resp);
+										setUpdateStatus(true);
+									}}>Uninstall</Button>
+									:
+									<Button variant='contained' onClick={async () => {
+										const resp = await installMedia({ media } as InstallMediaRequest);
+										console.log("installMedia resp: ", resp);
+										setUpdateStatus(true);
+									}}>Install</Button>
+								}
+							</Grid>
+							<Grid item xs={3} sx={{}}>
+								<Typography p={1}>Seeding:</Typography>
+							</Grid>
+							<Grid item xs={2} sx={{}}>
+								{status?.isSeeding ? <CheckTwoToneIcon /> : <CloseTwoToneIcon />}
+							</Grid>
+							<Grid item xs={6} sx={{}}>
+								<Switch disabled={!status?.isDownloaded} value={status?.isSeeding} onChange={() => { }} />
+								<FileUploadIcon />{status?.uploadRate} <DownloadIcon />{status?.downloadRate}
+							</Grid>
+							<Grid item xs={3} sx={{}}>
+								<Button onClick={async () => {
+									const resp = launchMedia({ media } as LaunchMediaRequest);
+									console.log("launchMedia resp: ", resp);
+								}}>Launch</Button>
+							</Grid>
+						</Grid>
+					</Paper>
 				</Grid>
-			</Container >
+				<Grid id="infoSection" item xs={6} md={4} sx={{ height: '100%' }}>
+					<Paper elevation={1} sx={{ height: "100%", m: 2 }}>
+						<Stack justifyContent={'space-between'} alignContent={"center"} direction="column" height={"100%"}>
+							<Box>
+								<Typography variant="h5">{media.title}</Typography>
+								<Divider />
+							</Box>
+							<Box>
+								<Typography height={"100%"}>{media.description}</Typography>
+							</Box>
+							<Box>
+								<Divider />
+								{media.tags.map((tag, index) => (
+									<Chip size="small" label={tag} key={index} sx={{ m: 1 }} />
+								))}
+							</Box>
+						</Stack>
+					</Paper>
+				</Grid>
+				<Grid id="descriptionSection" item xs={12}>
+					<Paper sx={{ width: '100%', m: 4 }}>
+						<ReactMarkdown children={media.longDescription} />
+					</Paper>
+				</Grid>
+			</Grid>
 		</Dialog >
 	);
 };
