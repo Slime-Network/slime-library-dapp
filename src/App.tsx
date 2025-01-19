@@ -118,8 +118,13 @@ export const App = () => {
 
 	useEffect(() => {
 		const fetch = async () => {
+<<<<<<< HEAD
 			const permsResp = await requestPermissions({ commands: ['getWallets', 'getNFTs'] } as RequestPermissionsRequest);
 			console.log('permsResp', permsResp);
+=======
+			const permsResp = await requestPermissions({ commands: ["getWallets", "getNFTs", "getDIDInfo"] } as RequestPermissionsRequest);
+			console.log("permsResp", permsResp);
+>>>>>>> 5a88759b74e68c18b9c195a2682cd893a44c8475
 			const results = await loadMediaData(await loadNfts());
 			setSearchResults(results);
 		};
