@@ -11,8 +11,8 @@ import { styled, alpha } from '@mui/material/styles';
 import { SessionTypes } from '@walletconnect/types';
 import { ChangeEvent, useState } from 'react';
 
-import WalletConnectMenu from '../gosti-shared/components/WalletConnectMenu';
-import ThemeSwitcher from "./ThemeSwitcher";
+import WalletConnectMenu from '../slime-shared/components/WalletConnectMenu';
+import ThemeSwitcher from './ThemeSwitcher';
 
 const Search = styled('div')(({ theme }) => ({
 	position: 'relative',
@@ -58,9 +58,8 @@ export const MainTopBar = (
 	session: SessionTypes.Struct | undefined,
 	connectToWallet: () => void,
 	disconnectFromWallet: () => void,
-	setSearchTerm: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void,
+	setSearchTerm: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
 ) => {
-
 	const [anchor2El, setAnchor2El] = useState<null | HTMLElement>(null);
 	const isMainMenuOpen = Boolean(anchor2El);
 
@@ -70,7 +69,6 @@ export const MainTopBar = (
 	const handleClose2 = () => {
 		setAnchor2El(null);
 	};
-
 
 	const mainMenuId = 'primary-search-main';
 	const renderMainMenu = (
@@ -108,28 +106,17 @@ export const MainTopBar = (
 					>
 						<MenuIcon />
 					</IconButton>
-					<Typography
-						variant="h6"
-						noWrap
-						component="div"
-						sx={{ display: { xs: 'none', sm: 'block' } }}
-					>
-						Gosti Library
+					<Typography variant="h6" noWrap component="div" sx={{ display: { xs: 'none', sm: 'block' } }}>
+						Slime Library
 					</Typography>
 					<Search>
 						<SearchIconWrapper>
 							<SearchIcon />
 						</SearchIconWrapper>
-						<StyledInputBase
-							placeholder="Search…"
-							inputProps={{ 'aria-label': 'search' }}
-							onChange={setSearchTerm}
-						/>
+						<StyledInputBase placeholder="Search…" inputProps={{ 'aria-label': 'search' }} onChange={setSearchTerm} />
 					</Search>
 					<Box sx={{ flexGrow: 1 }} />
-					<Box sx={{ display: { xs: 'flex' } }}>
-						{WalletConnectMenu(session, connectToWallet, disconnectFromWallet)}
-					</Box>
+					<Box sx={{ display: { xs: 'flex' } }}>{WalletConnectMenu(session, connectToWallet, disconnectFromWallet)}</Box>
 				</Toolbar>
 			</AppBar>
 			{renderMainMenu}

@@ -1,1 +1,1 @@
-yarn build & robocopy /NDL /NFL /NP /NJS /NJH /E "./build" "../gosti-client-tauri/resources/apps/gosti-library-dapp/"
+yarn build & robocopy /NDL /NFL /NP /NJS /NJH /E "./build" "../slime-client-tauri/resources/apps/slime-library-dapp/"
